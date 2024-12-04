@@ -119,7 +119,7 @@ function ThemeToggle() {
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider>
       <SupabaseProvider>
         <AppContent />
         <Toaster />
