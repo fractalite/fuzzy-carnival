@@ -5,9 +5,19 @@ import { useProjects } from "@/hooks/useProjects";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProjectDialog } from "@/components/dialogs/project-dialog";
+import { useState } from "react";
+import { useSupabase } from "@/components/providers/supabase-provider";
+import { toast } from "sonner";
+import { Database } from "@/lib/types";
+
+type Project = Database["public"]["Tables"]["projects"]["Row"];
 
 export function ProjectsPage() {
-  const { projects, loading, error } = useProjects();
+  const { projects, loading, error, createProject, updateProject } = useProjects();
+  const { user } = useSupabase();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | undefined>();
 
   if (error) {
     return (
@@ -44,11 +54,51 @@ export function ProjectsPage() {
     );
   }
 
+  const handleCreateProject = async (values: any) => {
+    if (!user) {
+      toast.error("You must be logged in to create a project");
+      return;
+    }
+
+    try {
+      await createProject({
+        ...values,
+        owner_id: user.id,
+      });
+      toast.success("Project created successfully");
+    } catch (error) {
+      toast.error("Failed to create project");
+      throw error;
+    }
+  };
+
+  const handleUpdateProject = async (values: any) => {
+    if (!selectedProject) return;
+
+    try {
+      await updateProject(selectedProject.id, values);
+      toast.success("Project updated successfully");
+    } catch (error) {
+      toast.error("Failed to update project");
+      throw error;
+    }
+  };
+
+  const handleEditProject = (project: Project) => {
+    setSelectedProject(project);
+    setDialogOpen(true);
+  };
+
+  const handleOpenDialog = () => {
+    setSelectedProject(undefined);
+    setDialogOpen(true);
+  };
+
   return (
     <div className="grid gap-4">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Projects</h1>
-        <Button>
+        <Button onClick={handleOpenDialog}>
           <Plus className="h-4 w-4 mr-2" />
           New Project
         </Button>
@@ -56,13 +106,13 @@ export function ProjectsPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => (
-          <ProjectCard
-            key={project.id}
-            project={project}
-            // We'll implement these features later
-            teamMembers={[]}
-            taskProgress={0}
-          />
+          <div key={project.id} onClick={() => handleEditProject(project)} className="cursor-pointer">
+            <ProjectCard
+              project={project}
+              teamMembers={[]}
+              taskProgress={0}
+            />
+          </div>
         ))}
       </div>
       
@@ -74,6 +124,13 @@ export function ProjectsPage() {
           <TeamMembers />
         </div>
       </div>
+
+      <ProjectDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        project={selectedProject}
+        onSubmit={selectedProject ? handleUpdateProject : handleCreateProject}
+      />
     </div>
   );
 }
