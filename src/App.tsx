@@ -9,6 +9,7 @@ import { useState } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ChatProvider } from "@/components/providers/chat-provider";
+import { SupabaseProvider } from "@/components/providers/supabase-provider";
 
 type Page = "dashboard" | "calendar" | "projects" | "documents" | "analytics" | "settings";
 
@@ -36,15 +37,17 @@ export default function App() {
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <ChatProvider>
-        <div className="min-h-screen bg-background">
-          <MainNav currentPage={currentPage} onNavigate={setCurrentPage} />
-          <main className="container mx-auto py-4 px-2">
-            {renderPage()}
-          </main>
-        </div>
-        <Toaster />
-      </ChatProvider>
+      <SupabaseProvider>
+        <ChatProvider>
+          <div className="min-h-screen bg-background">
+            <MainNav currentPage={currentPage} onNavigate={setCurrentPage} />
+            <main className="container mx-auto py-4 px-2">
+              {renderPage()}
+            </main>
+          </div>
+          <Toaster />
+        </ChatProvider>
+      </SupabaseProvider>
     </ThemeProvider>
   );
 }
